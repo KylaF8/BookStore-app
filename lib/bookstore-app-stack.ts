@@ -16,5 +16,13 @@ export class BookstoreAppStack extends cdk.Stack {
       memorySize: 128,
     });
 
+    const bookstoreFnURL = bookstoreFn.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.AWS_IAM,   
+      cors: {
+        allowedOrigins: ["*"],
+      },
+    });
+
+    new cdk.CfnOutput(this, "BookStore Function Url", { value: bookstoreFnURL.url });
   }
 }
