@@ -173,8 +173,6 @@ export class BookstoreAppStack extends cdk.Stack {
       "GET",
       new apig.LambdaIntegration(getBookByIdFn, { proxy: true })
     );
-
-
     
     const newBookFn = new lambdanode.NodejsFunction(this, "AddBookFn", {
       architecture: lambda.Architecture.ARM_64,
@@ -188,14 +186,33 @@ export class BookstoreAppStack extends cdk.Stack {
       },
     });
 
+    const deleteBookFn = new lambdanode.NodejsFunction(this, "DeleteBookFn", {
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      entry: `${__dirname}/../lambdas/deleteBook.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: booksTable.tableName,
+        REGION: 'eu-west-1',
+      },
+    });
+
     booksTable.grantReadWriteData(newBookFn)
+
+    booksTable.grantWriteData(deleteBookFn);
 
     booksEndpoint.addMethod(
       "POST",
       new apig.LambdaIntegration(newBookFn, { proxy: true })
     );
-
     
+    const deleteBookURL = deleteBookFn.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+      cors: { allowedOrigins: ["*"] },
+    });
+    
+    new cdk.CfnOutput(this, "Delete Book Function Url", { value: deleteBookURL.url });
 
   }
 }
