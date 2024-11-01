@@ -1,4 +1,4 @@
-import { Handler } from "aws-lambda";
+import { APIGatewayProxyHandlerV2 } from "aws-lambda";  
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
 
@@ -6,8 +6,8 @@ const ddbDocClient = DynamoDBDocumentClient.from(
   new DynamoDBClient({ region: process.env.REGION })
 );
 
-export const handler: Handler = async (event, context) => {
-  try {
+export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { 
+    try {
     console.log("Fetching all books...");
 
     const command = new ScanCommand({

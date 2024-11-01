@@ -6,6 +6,7 @@ import * as custom from "aws-cdk-lib/custom-resources";
 import { generateBatch } from "../shared/util";
 import { books, bookCharacters } from "../seed/books";
 import { Construct } from 'constructs';
+import * as apig from "aws-cdk-lib/aws-apigateway";
 
 export class BookstoreAppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -146,6 +147,33 @@ export class BookstoreAppStack extends cdk.Stack {
     new cdk.CfnOutput(this, "Get Book Characters URL", {
       value: getBookCharactersURL.url,
     });
+
+
+    //Rest API
+    const api = new apig.RestApi(this, "RestAPI", {
+      description: "demo api",
+      deployOptions: {
+        stageName: "dev",
+      },
+      defaultCorsPreflightOptions: {
+        allowHeaders: ["Content-Type", "X-Amz-Date"],
+        allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+        allowCredentials: true,
+        allowOrigins: ["*"],
+      },
+    });
+
+    const booksEndpoint = api.root.addResource("books");
+    booksEndpoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getAllBooksFn, { proxy: true })
+    );
+
+    const bookEndpoint = booksEndpoint.addResource("{bookId}");
+    bookEndpoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getBookByIdFn, { proxy: true })
+    );
 
     
 
