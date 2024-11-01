@@ -51,6 +51,33 @@ export class BookstoreAppStack extends cdk.Stack {
       }),
     });
 
+    const getBookByIdFn = new lambdanode.NodejsFunction(
+      this,
+      "GetBookByIdFn",
+      {
+        architecture: lambda.Architecture.ARM_64,
+        runtime: lambda.Runtime.NODEJS_18_X,
+        entry: `${__dirname}/../lambdas/getBookById.ts`,
+        timeout: cdk.Duration.seconds(10),
+        memorySize: 128,
+        environment: {
+          TABLE_NAME: booksTable.tableName,
+          REGION: 'eu-west-1',
+        },
+      }
+    );
+
+    const getBookByIdURL = getBookByIdFn.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+      cors: {
+        allowedOrigins: ["*"],
+      },
+    });
+
+    booksTable.grantReadData(getBookByIdFn)
+
+    new cdk.CfnOutput(this, "Get Book Function Url", { value: getBookByIdURL.url });
+
 
     new cdk.CfnOutput(this, "BookStore Function Url", { value: bookstoreFnURL.url });
   }
