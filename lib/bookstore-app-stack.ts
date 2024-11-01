@@ -148,7 +148,6 @@ export class BookstoreAppStack extends cdk.Stack {
       value: getBookCharactersURL.url,
     });
 
-
     //Rest API
     const api = new apig.RestApi(this, "RestAPI", {
       description: "demo api",
@@ -173,6 +172,27 @@ export class BookstoreAppStack extends cdk.Stack {
     bookEndpoint.addMethod(
       "GET",
       new apig.LambdaIntegration(getBookByIdFn, { proxy: true })
+    );
+
+
+    
+    const newBookFn = new lambdanode.NodejsFunction(this, "AddBookFn", {
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_16_X,
+      entry: `${__dirname}/../lambdas/addBook.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: booksTable.tableName,
+        REGION: "eu-west-1",
+      },
+    });
+
+    booksTable.grantReadWriteData(newBookFn)
+
+    booksEndpoint.addMethod(
+      "POST",
+      new apig.LambdaIntegration(newBookFn, { proxy: true })
     );
 
     
