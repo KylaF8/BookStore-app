@@ -112,12 +112,13 @@ export class BookstoreAppStack extends cdk.Stack {
       "GetBookCharactersMembersFn",
       {
         architecture: lambda.Architecture.ARM_64,
-        runtime: lambda.Runtime.NODEJS_16_X,
-        entry: `${__dirname}/../lambdas/getBookCharactersMembers.ts`, 
+        runtime: lambda.Runtime.NODEJS_18_X,
+        entry: `${__dirname}/../lambdas/getBookCharactersMembers.ts`,
         timeout: cdk.Duration.seconds(10),
         memorySize: 128,
         environment: {
           CAST_TABLE_NAME: bookCharactersTable.tableName,
+          BOOKS_TABLE_NAME: booksTable.tableName,
           REGION: "eu-west-1",
         },
       }

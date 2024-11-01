@@ -3,6 +3,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
   QueryCommand,
+  GetCommand,
   QueryCommandInput,
 } from "@aws-sdk/lib-dynamodb";
 
@@ -34,49 +35,53 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     }
 
     const bookId = parseInt(queryParams.bookId);
+    const includeFacts = queryParams.facts === "true";
+
     let commandInput: QueryCommandInput = {
-      TableName: process.env.CAST_TABLE_NAME, 
+      TableName: process.env.CAST_TABLE_NAME,
+      KeyConditionExpression: "bookId = :b",
+      ExpressionAttributeValues: {
+        ":b": bookId,
+      },
     };
 
     if ("roleName" in queryParams) {
-      commandInput = {
-        ...commandInput,
-        IndexName: "roleIx", 
-        KeyConditionExpression: "bookId = :b and begins_with(roleName, :r)",
-        ExpressionAttributeValues: {
-          ":b": bookId,
-          ":r": queryParams.roleName,
-        },
-      };
+      commandInput.IndexName = "roleIx";
+      commandInput.KeyConditionExpression = "bookId = :b and begins_with(roleName, :r)";
+      commandInput.ExpressionAttributeValues![":r"] = queryParams.roleName;
     } else if ("characterName" in queryParams) {
-      commandInput = {
-        ...commandInput,
-        KeyConditionExpression: "bookId = :b and begins_with(characterName, :c)",
-        ExpressionAttributeValues: {
-          ":b": bookId,
-          ":c": queryParams.characterName,
-        },
-      };
-    } else {
-      commandInput = {
-        ...commandInput,
-        KeyConditionExpression: "bookId = :b",
-        ExpressionAttributeValues: {
-          ":b": bookId,
-        },
-      };
+      commandInput.KeyConditionExpression = "bookId = :b and begins_with(characterName, :c)";
+      commandInput.ExpressionAttributeValues![":c"] = queryParams.characterName;
     }
 
     const commandOutput = await ddbDocClient.send(new QueryCommand(commandInput));
+    const responseBody: any = { cast: commandOutput.Items };
+
+    if (includeFacts) {
+      const bookDetails = await ddbDocClient.send(
+        new GetCommand({
+          TableName: process.env.TABLE_NAME, 
+          Key: { id: bookId },
+        })
+      );
+
+      if (bookDetails.Item) {
+        responseBody.bookDetails = {
+          title: bookDetails.Item.title,
+          genre: bookDetails.Item.genre,
+          synopsis: bookDetails.Item.synopsis,
+        };
+      } else {
+        responseBody.bookDetails = { message: "No additional book details found" };
+      }
+    }
 
     return {
       statusCode: 200,
       headers: {
         "content-type": "application/json",
       },
-      body: JSON.stringify({
-        data: commandOutput.Items,
-      }),
+      body: JSON.stringify(responseBody),
     };
   } catch (error: any) {
     console.log("Error: ", JSON.stringify(error));
