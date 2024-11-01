@@ -1,4 +1,4 @@
-import {Book} from '../shared/types'
+import {Book, BookCharacters} from '../shared/types'
 
 export const books : Book[] = [
   {
@@ -38,3 +38,31 @@ export const books : Book[] = [
     release_date: 20/6/1890,
   }
 ]
+
+
+export const bookCharacters: BookCharacters[] = [
+    {
+       bookId: 1,
+       characterName: "Bilbo Baggins",
+       roleName: "Hobbit of the Shire",
+       roleDescription: "Bilbo is the burglar for the company of Thorin Oakenshield.",
+    },
+    {
+       bookId: 2,
+       characterName: "Frodo Baggins",
+       roleName: "Hobbit of the Shire",
+       roleDescription: "One of the four Hobbits among the fellowship, who journey to destroy the one ring",
+    },
+    {
+       bookId: 3,
+       characterName: "Elizabeth Bennet",
+       roleName: "Female Protagonist",
+       roleDescription: "Elizabeth Bennet is the much-beloved heroine of Pride and Prejudice.",
+    },
+    {
+       bookId: 4,
+       characterName: "Dorian Gray",
+       roleName: "Male Protagonist",
+       roleDescription: "He is the archetype of male youth and beauty. As such, he captures the imagination of Basil Hallward, a painter, who paints his portrait.",
+    },
+   ];

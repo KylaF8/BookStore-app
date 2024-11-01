@@ -4,8 +4,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as custom from "aws-cdk-lib/custom-resources";
 import { generateBatch } from "../shared/util";
-import {books} from "../seed/books";
-
+import { books, bookCharacters } from "../seed/books";
 import { Construct } from 'constructs';
 
 export class BookstoreAppStack extends cdk.Stack {
@@ -34,22 +33,36 @@ export class BookstoreAppStack extends cdk.Stack {
       tableName: "Books",
     });
 
+    const bookCharactersTable = new dynamodb.Table(this, "bookCharactersTable", {
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      partitionKey: { name: "bookId", type: dynamodb.AttributeType.NUMBER },
+      sortKey: { name: "characterName", type: dynamodb.AttributeType.STRING },
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      tableName: "BookCharacters",
+ });
 
-    new custom.AwsCustomResource(this, "booksddbInitData", {
-      onCreate: {
-        service: "DynamoDB",
-        action: "batchWriteItem",
-        parameters: {
-          RequestItems: {
-            [booksTable.tableName]: generateBatch(books),
-          },
-        },
-        physicalResourceId: custom.PhysicalResourceId.of("booksddbInitData"), //.of(Date.now().toString()),
-      },
-      policy: custom.AwsCustomResourcePolicy.fromSdkCalls({
-        resources: [booksTable.tableArn],
-      }),
-    });
+    bookCharactersTable.addLocalSecondaryIndex({
+      indexName: "roleIx",
+      sortKey: { name: "roleName", type: dynamodb.AttributeType.STRING },
+ });
+
+
+ new custom.AwsCustomResource(this, "booksddbInitData", {
+  onCreate: {
+    service: "DynamoDB",
+    action: "batchWriteItem",
+    parameters: {
+      RequestItems: {
+        [booksTable.tableName]: generateBatch(books),
+        [bookCharactersTable.tableName]: generateBatch(bookCharacters),  
+},
+},
+    physicalResourceId: custom.PhysicalResourceId.of("booksddbInitData"), 
+},
+  policy: custom.AwsCustomResourcePolicy.fromSdkCalls({
+    resources: [booksTable.tableArn, bookCharactersTable.tableArn],  
+}),
+});
 
     const getBookByIdFn = new lambdanode.NodejsFunction(
       this,
@@ -93,15 +106,47 @@ export class BookstoreAppStack extends cdk.Stack {
       },
     });
 
+
+    const getBookCharactersMembersFn = new lambdanode.NodejsFunction(
+      this,
+      "GetBookCharactersMembersFn",
+      {
+        architecture: lambda.Architecture.ARM_64,
+        runtime: lambda.Runtime.NODEJS_16_X,
+        entry: `${__dirname}/../lambdas/getBookCharactersMembers.ts`, 
+        timeout: cdk.Duration.seconds(10),
+        memorySize: 128,
+        environment: {
+          CAST_TABLE_NAME: bookCharactersTable.tableName,
+          REGION: "eu-west-1",
+        },
+      }
+    );
+
+    const getBookCharactersURL = getBookCharactersMembersFn.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+      cors: {
+        allowedOrigins: ["*"],
+ },
+ });    
+
     booksTable.grantReadData(getBookByIdFn)
 
     booksTable.grantReadData(getAllBooksFn);
+
+    bookCharactersTable.grantReadData(getBookCharactersMembersFn);
 
     new cdk.CfnOutput(this, "Get Book Function Url", { value: getBookByIdURL.url });
 
     new cdk.CfnOutput(this, "BookStore Function Url", { value: bookstoreFnURL.url });
 
     new cdk.CfnOutput(this, "Get All Books Function Url", { value: getAllBooksURL.url });
+
+    new cdk.CfnOutput(this, "Get Book Characters URL", {
+      value: getBookCharactersURL.url,
+    });
+
+    
 
   }
 }
