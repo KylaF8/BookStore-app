@@ -6,7 +6,7 @@ const ddbDocClient = createDocumentClient();
 
 export const handler: APIGatewayProxyHandlerV2 = async (event) => {
   try {
-    const { bookId } = event.pathParameters || {};
+    const bookId = event.pathParameters?.bookId;
 
     if (!bookId) {
       return {
@@ -18,7 +18,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
 
     await ddbDocClient.send(
       new DeleteCommand({
-        TableName: process.env.TABLE_NAME,
+        TableName: process.env.TABLE_NAME!,
         Key: { id: parseInt(bookId) },
       })
     );
