@@ -36,9 +36,17 @@ export const books : Book[] = [
     synopsis: 'The story revolves around a portrait of Dorian Gray painted by Basil Hallward, a friend of Dorians and an artist infatuated with Dorians beauty. Through Basil, Dorian meets Lord Henry Wotton and is soon enthralled by the aristocrats hedonistic worldview: that beauty and sensual fulfillment are the only things worth pursuing in life.',
     original_language: 'en',
     release_date: 20/6/1890,
+  },
+  {
+    id: 5,
+    title: 'Emma',
+    original_title: 'Emma',
+    genre: 'Fiction',
+    synopsis: '...',
+    original_language: 'en',
+    release_date: 23/12/1815,
   }
 ]
-
 
 export const bookCharacters: BookCharacters[] = [
     {
@@ -65,4 +73,10 @@ export const bookCharacters: BookCharacters[] = [
        roleName: "Male Protagonist",
        roleDescription: "He is the archetype of male youth and beauty. As such, he captures the imagination of Basil Hallward, a painter, who paints his portrait.",
     },
+    {
+      bookId: 5,
+      characterName: "Emma",
+      roleName: "Female Protagonist",
+      roleDescription: "...",
+   }
    ];

@@ -1,47 +1,112 @@
+// import { APIGatewayProxyHandlerV2 } from "aws-lambda";
+// import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+// import { DynamoDBDocumentClient, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+
+// const ddbDocClient = createDocumentClient();
+
+// export const handler: APIGatewayProxyHandlerV2 = async (event) => {
+//   try {
+//     const bookId = event.pathParameters?.bookId;
+
+//     if (!bookId) {
+//       return {
+//         statusCode: 400,
+//         headers: { "content-type": "application/json" },
+//         body: JSON.stringify({ message: "Missing bookId parameter" }),
+//       };
+//     }
+
+//     await ddbDocClient.send(
+//       new DeleteCommand({
+//         TableName: process.env.TABLE_NAME!,
+//         Key: { id: parseInt(bookId) },
+//       })
+//     );
+
+//     return {
+//       statusCode: 200,
+//       headers: { "content-type": "application/json" },
+//       body: JSON.stringify({ message: `Book with ID ${bookId} deleted successfully` }),
+//     };
+//   } catch (error) {
+//     console.error("Error deleting book:", error);
+//     return {
+//       statusCode: 500,
+//       headers: { "content-type": "application/json" },
+//       body: JSON.stringify({ message: "Failed to delete the book" }),
+//     };
+//   }
+// };
+
+// function createDocumentClient() {
+//   const ddbClient = new DynamoDBClient({ region: process.env.REGION });
+//   const marshallOptions = { convertEmptyValues: true, removeUndefinedValues: true, convertClassInstanceToMap: true };
+//   const unmarshallOptions = { wrapNumbers: false };
+//   const translateConfig = { marshallOptions, unmarshallOptions };
+//   return DynamoDBDocumentClient.from(ddbClient, translateConfig);
+// }
+
+
+
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 
-const ddbDocClient = createDocumentClient();
+const ddbDocClient = createDDbDocClient();
 
-export const handler: APIGatewayProxyHandlerV2 = async (event) => {
+export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
-    const bookId = event.pathParameters?.bookId;
+    console.log("[EVENT]", JSON.stringify(event));
+
+    const parameters = event?.pathParameters;
+    const bookId = parameters?.bookId ? parseInt(parameters.bookId) : undefined;
 
     if (!bookId) {
       return {
         statusCode: 400,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message: "Missing bookId parameter" }),
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ message: "Invalid or missing book ID" }),
       };
     }
 
-    await ddbDocClient.send(
+    const commandOutput = await ddbDocClient.send(
       new DeleteCommand({
-        TableName: process.env.TABLE_NAME!,
-        Key: { id: parseInt(bookId) },
+        TableName: process.env.TABLE_NAME,
+        Key: { id: bookId },
       })
     );
 
     return {
       statusCode: 200,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message: `Book with ID ${bookId} deleted successfully` }),
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ message: "Book deleted successfully" }),
     };
-  } catch (error) {
-    console.error("Error deleting book:", error);
+  } catch (error: any) {
+    console.error("[ERROR]", JSON.stringify(error));
     return {
       statusCode: 500,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ message: "Failed to delete the book" }),
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ error: "An error occurred while deleting the book" }),
     };
   }
 };
 
-function createDocumentClient() {
+function createDDbDocClient() {
   const ddbClient = new DynamoDBClient({ region: process.env.REGION });
-  const marshallOptions = { convertEmptyValues: true, removeUndefinedValues: true, convertClassInstanceToMap: true };
-  const unmarshallOptions = { wrapNumbers: false };
+  const marshallOptions = {
+    convertEmptyValues: true,
+    removeUndefinedValues: true,
+    convertClassInstanceToMap: true,
+  };
+  const unmarshallOptions = {
+    wrapNumbers: false,
+  };
   const translateConfig = { marshallOptions, unmarshallOptions };
   return DynamoDBDocumentClient.from(ddbClient, translateConfig);
 }

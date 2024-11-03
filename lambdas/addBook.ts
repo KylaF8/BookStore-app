@@ -12,7 +12,6 @@ const ddbDocClient = createDDbDocClient();
 
 export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
-    // Print Event
     console.log("[EVENT]", JSON.stringify(event));
     const body = event.body ? JSON.parse(event.body) : undefined;
     if (!body) {
@@ -24,7 +23,6 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         body: JSON.stringify({ message: "Missing request body" }),
       };
     }
-    // NEW
     if (!isValidBodyParams(body)) {
         return {
           statusCode: 500,
