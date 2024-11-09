@@ -8,7 +8,7 @@ export const books : Book[] = [
     genre: 'Fantasy',
     synopsis: 'A well mannered Hobbit named Bilbo Baggins, embarks upon a journey to take back a kingdom, and a very important jewel ,with twelve dwarves, and a wizard named Gandalf the Grey.',
     original_language: 'en',
-    release_date: 21/9/1937,
+    release_date: "21/9/1937",
   },
   {
     id: 2,
@@ -17,7 +17,7 @@ export const books : Book[] = [
     genre: 'Fantasy',
     synopsis: 'A hobbit named Frodo inherits the One Ring, which can destroy the entire world. With the recently reawakened evil, being Sauron, going after the Ring to cement his reign, Frodo joins with eight others to destroy the Ring and defeat Sauron.',
     original_language: 'en',
-    release_date: 29/7/1954,
+    release_date: "29/7/1954",
   },
   {
     id: 3,
@@ -26,7 +26,7 @@ export const books : Book[] = [
     genre: 'Romance',
     synopsis: 'Pride and Prejudice follows the turbulent relationship between Elizabeth Bennet, the daughter of a country gentleman, and Fitzwilliam Darcy, a rich aristocratic landowner. They must overcome the titular sins of pride and prejudice in order to fall in love and marry.',
     original_language: 'en',
-    release_date: 28/1/1813,
+    release_date: "28/1/1813",
   },
   {
     id: 4,
@@ -35,16 +35,7 @@ export const books : Book[] = [
     genre: 'Gothic Fiction',
     synopsis: 'The story revolves around a portrait of Dorian Gray painted by Basil Hallward, a friend of Dorians and an artist infatuated with Dorians beauty. Through Basil, Dorian meets Lord Henry Wotton and is soon enthralled by the aristocrats hedonistic worldview: that beauty and sensual fulfillment are the only things worth pursuing in life.',
     original_language: 'en',
-    release_date: 20/6/1890,
-  },
-  {
-    id: 5,
-    title: 'Emma',
-    original_title: 'Emma',
-    genre: 'Fiction',
-    synopsis: '...',
-    original_language: 'en',
-    release_date: 23/12/1815,
+    release_date: "20/6/1890",
   }
 ]
 
@@ -72,11 +63,5 @@ export const bookCharacters: BookCharacters[] = [
        characterName: "Dorian Gray",
        roleName: "Male Protagonist",
        roleDescription: "He is the archetype of male youth and beauty. As such, he captures the imagination of Basil Hallward, a painter, who paints his portrait.",
-    },
-    {
-      bookId: 5,
-      characterName: "Emma",
-      roleName: "Female Protagonist",
-      roleDescription: "...",
-   }
+    }
    ];
