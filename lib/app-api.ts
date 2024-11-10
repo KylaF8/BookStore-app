@@ -8,6 +8,7 @@ import { books, bookCharacters } from "../seed/books";
 import { Construct } from 'constructs';
 import * as apig from "aws-cdk-lib/aws-apigateway";
 import * as node from "aws-cdk-lib/aws-lambda-nodejs";
+import * as iam from 'aws-cdk-lib/aws-iam';
 
 type AppApiProps = {
     userPoolId: string;
@@ -50,7 +51,6 @@ export class AppApi extends Construct {
       );
 
  
-    //Tables 
     const booksTable = new dynamodb.Table(this, "BooksTable", {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: "id", type: dynamodb.AttributeType.NUMBER },
@@ -70,8 +70,16 @@ export class AppApi extends Construct {
       indexName: "roleIx",
       sortKey: { name: "roleName", type: dynamodb.AttributeType.STRING },
     });
+
+    const translateTable = new dynamodb.Table(this, "translateTable", {
+        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+        partitionKey: { name: "bookId", type: dynamodb.AttributeType.NUMBER },
+        sortKey: { name: "language", type: dynamodb.AttributeType.STRING },
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+        tableName: "TranslateBook",
+      });
  
-    //Functions 
+
     const getBookByIdFn = new lambdanode.NodejsFunction(
       this,
       "GetBookByIdFn",
@@ -177,15 +185,34 @@ export class AppApi extends Construct {
             },
           }
         );
+
+        const getTranslateBookFn = new lambdanode.NodejsFunction(
+            this,
+            "getTranslateBookFn",
+            {
+              architecture: lambda.Architecture.ARM_64,
+              runtime: lambda.Runtime.NODEJS_18_X,
+              entry: `${__dirname}/../lambdas/translate.ts`,
+              timeout: cdk.Duration.seconds(10),
+              memorySize: 128,
+              environment: {
+                TRANSLATE_TABLE_NAME: translateTable.tableName,
+                BOOKS_TABLE_NAME: booksTable.tableName,
+                REGION: "eu-west-1",
+              },
+            }
+          );
         
-        //Permissions 
         booksTable.grantReadData(getBookByIdFn)
         booksTable.grantReadData(getAllBooksFn)
         booksTable.grantReadWriteData(newBookFn)
         booksTable.grantReadWriteData(deleteBookFn)
         booksTable.grantReadWriteData(updateBookFn)
+        booksTable.grantReadWriteData(getTranslateBookFn)
+        translateTable.grantReadWriteData(getTranslateBookFn)
         bookCharactersTable.grantReadData(getBookCharactersMembersFn)
         bookCharactersTable.grantReadData(getBookByIdFn)
+
 
         const appApi = new apig.RestApi(this, "AppAPI", {
           restApiName: "App API",
@@ -235,6 +262,16 @@ export class AppApi extends Construct {
             authorizationType: apig.AuthorizationType.CUSTOM,
         }
         );
+
+        const translationEndpoint = bookEndpoint.addResource("Translate");
+        translationEndpoint.addMethod( "GET", new apig.LambdaIntegration(getTranslateBookFn, { proxy: true }));
+
+
+        getTranslateBookFn.addToRolePolicy(new iam.PolicyStatement ({
+            actions: ['translate:TranslateText'],
+            resources: ['*']
+          })
+          )
 
       }
     }
