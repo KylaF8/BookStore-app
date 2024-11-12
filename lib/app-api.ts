@@ -133,7 +133,7 @@ export class AppApi extends Construct {
 
         const newBookFn = new lambdanode.NodejsFunction(this, "AddBookFn", {
           architecture: lambda.Architecture.ARM_64,
-          runtime: lambda.Runtime.NODEJS_16_X,
+          runtime: lambda.Runtime.NODEJS_18_X,
           entry: `${__dirname}/../lambdas/addBook.ts`,
           timeout: cdk.Duration.seconds(10),
           memorySize: 128,
